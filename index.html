@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spinning Wheel</title>
+<style>
+  body {
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  canvas {
+    margin-top: 20px;
+    border-radius: 50%;
+  }
+  button {
+    margin-top: 20px;
+    padding: 14px 28px;
+    font-size: 20px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎡 sugalvot name kazkoki</h1>
+
+<button onclick="spin()">SPIN</button>
+<br>
+<canvas id="wheel" width="700" height="700"></canvas>
+
+<script>
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+let angle = 0;
+let spinning = false;
+
+// Pre-written items
+const items = [
+  "Alice", "Bob", "Charlie", "David", "Eva", "Frank",
+  "Grace", "Hannah", "Ian", "Jack", "Karen", "Leo",
+  "Mia", "Nina", "Oscar", "Paul", "Quinn", "Rita",
+  "Sam", "Tina", "Uma", "Victor", "Wendy", "Xander",
+  "Yara", "Zane"
+];
+
+// pastel colors
+const pastelColors = [
+  "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF",
+  "#D5BAFF", "#FFBAE1", "#BAFFD9", "#FFE4BA", "#BAFFFC"
+];
+
+let winnerIndex = null;
+
+function drawWheel(items) {
+  const radius = canvas.width / 2;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.translate(radius, radius);
+
+  const slice = 2 * Math.PI / items.length;
+
+  items.forEach((item, i) => {
+    ctx.beginPath();
+    ctx.fillStyle = pastelColors[i % pastelColors.length];
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, i * slice + angle, (i + 1) * slice + angle);
+    ctx.fill();
+
+    const textAngle = i * slice + slice / 2 + angle;
+    const textRadius = radius * 0.5;
+    const x = textRadius * Math.cos(textAngle);
+    const y = textRadius * Math.sin(textAngle);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(textAngle);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "black";
+    ctx.font = "bold 20px Arial";
+    ctx.fillText(item, 0, 0);
+    ctx.restore();
+  });
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  // pointer on right
+  ctx.fillStyle = "red";
+  ctx.beginPath();
+  ctx.moveTo(canvas.width - 15, canvas.height/2 - 15);
+  ctx.lineTo(canvas.width - 15, canvas.height/2 + 15);
+  ctx.lineTo(canvas.width - 50, canvas.height/2);
+  ctx.fill();
+}
+
+function displayWinner(name) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = "bold 64px Arial";
+  ctx.fillStyle = "#FFD700";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`🎉 ${name} 🎉`, canvas.width/2, canvas.height/2);
+}
+
+function spin() {
+  if (spinning) return;
+  spinning = true;
+  winnerIndex = null;
+
+  let velocity = Math.random() * 0.5 + 0.6;
+  const normalDecay = 0.985;
+  const slowDecay = 0.995;
+  let frame = 0;
+  const totalFrames = 300;
+
+  function animate() {
+    if (frame < totalFrames * 0.9) {
+      velocity *= normalDecay;
+    } else {
+      velocity *= slowDecay;
+    }
+
+    angle += velocity;
+    drawWheel(items);
+
+    frame++;
+    if (velocity > 0.001) {
+      requestAnimationFrame(animate);
+    } else {
+      // determine winner
+      const slice = 2 * Math.PI / items.length;
+      const finalAngle = (2 * Math.PI - (angle % (2 * Math.PI))) % (2 * Math.PI);
+      winnerIndex = Math.floor(finalAngle / slice) % items.length;
+
+      // Fade-out animation only for wheel spinning
+      let opacity = 1;
+      function fadeOutWheel() {
+        opacity -= 0.02;
+        if (opacity <= 0) {
+          opacity = 0;
+          canvas.style.opacity = 1; // reset opacity to fully visible
+          displayWinner(items[winnerIndex]);
+          spinning = false;
+        } else {
+          canvas.style.opacity = opacity;
+          requestAnimationFrame(fadeOutWheel);
+        }
+      }
+      fadeOutWheel();
+    }
+  }
+
+  animate();
+}
+</script>
+
+</body>
+</html>
