@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<h1>🎡 sugalvot name</h1>
+<h1>🎡 Ratukas 🎡</h1>
 
 <button onclick="spin()">SPIN</button>
 <br>
@@ -36,8 +36,9 @@ const ctx = canvas.getContext("2d");
 
 let angle = 0;
 let spinning = false;
+let showingWinner = false;
 
-const items = [
+let items = [
   "Aleksandra C. A. IVa", "Emilija A. IVa", "Emilius A. IVa", "Matas B. IVa", "Marija B. IVa", "Aivija D. IVa", "Justina G. IVa", "Saulė G. IVa", "Orestas K. IVa",
   "Gabrielius K. IVa", "Majus K. IVa", "Karina K, IVa", "Ugnė L. IVa", "Izabelė M. IVa", "Austėja M. IVa", "Kamilė M. IVa", "Danielius M. IVa", "Agota N. IVa",
   "Žygimantas P. IVa", "Gaja P. IVa", "Matas R. IVa", "Emilija V. IVa", "Ąžuolas V. IVa", "Živilė V. IVa", "Benediktas Ž. IVa", "Vaiva A. IVb", "Justas B. IVb",
@@ -54,6 +55,11 @@ const items = [
   "Aironas U. IVe"
 ];
 
+const pastelColors = [
+  "#FFB3BA", "#FFDFBA", "#FFFFBA",
+  "#BAFFC9", "#BAE1FF", "#D5BAFF"
+];
+
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -61,12 +67,9 @@ function shuffleArray(arr) {
   }
 }
 
-const pastelColors = [
-  "#FFB3BA", "#FFDFBA", "#FFFFBA",
-  "#BAFFC9", "#BAE1FF", "#D5BAFF"
-];
-
 function drawWheel(items) {
+  if (items.length === 0) return;
+
   const radius = canvas.width / 2;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.translate(radius, radius);
@@ -115,7 +118,6 @@ function displayWinner(name) {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#FFD700";
 
-  // shrink text until it fits
   do {
     ctx.font = `bold ${fontSize}px Arial`;
     fontSize--;
@@ -125,9 +127,16 @@ function displayWinner(name) {
 }
 
 function spin() {
-  if (spinning) return;
-  spinning = true;
+  if (spinning || items.length === 0) return;
 
+  // If winner is showing, clear and redraw wheel
+  if (showingWinner) {
+    showingWinner = false;
+    angle = 0;
+    drawWheel(items);
+  }
+
+  spinning = true;
   shuffleArray(items);
 
   let velocity = Math.random() * 0.8 + 1.1;
@@ -144,11 +153,16 @@ function spin() {
       const slice = 2 * Math.PI / items.length;
       const finalAngle = (2 * Math.PI - angle % (2 * Math.PI)) % (2 * Math.PI);
       const winnerIndex = Math.floor(finalAngle / slice);
+      const winner = items[winnerIndex];
+
+      // remove winner
+      items.splice(winnerIndex, 1);
 
       setTimeout(() => {
-        displayWinner(items[winnerIndex]);
+        displayWinner(winner);
+        showingWinner = true;
         spinning = false;
-      }, 150);
+      }, 120);
     }
   }
 
