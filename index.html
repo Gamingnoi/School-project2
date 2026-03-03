@@ -25,10 +25,9 @@
 <body>
 
 <h1>🎡 Teleloto 🎡</h1>
-
 <button onclick="spin()">SPIN</button>
 <br>
-<canvas id="wheel" width="700" height="700"></canvas>
+<canvas id="wheel" width="600" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("wheel");
@@ -36,7 +35,6 @@ const ctx = canvas.getContext("2d");
 
 let angle = 0;
 let spinning = false;
-let showingWinner = false;
 
 let items = [
   "Aleksandra C. A. IVa", "Emilija A. IVa", "Emilius A. IVa", "Matas B. IVa", "Marija B. IVa", "Aivija D. IVa", "Justina G. IVa", "Saulė G. IVa", "Orestas K. IVa",
@@ -50,126 +48,143 @@ let items = [
   "Enėja T. IVc", "Gerda T. IVc", "Urtė U. IVc", "Rugilė V. IVc", "Mileta V. IVc", "Tajus Ž. IVc", "Emilijus A. IVd", "Gabrielius B. IVd", "Žilvinas E. IVd",
   "Trojus Petras J. IVd", "Smiltė L. IVd", "Ula M. IVd", "Aurelija M. IVd", "Liutauras P. IVd", "Liepa P. IVd", "Ema P. IVd", "Arijana P. IVd", "Rugilė R. IVd",
   "Evanas R. IVd", "Kamilė S. IVd", "Eglė S. IVd", "Karolis S. IVd", "Ervinas Š. IVd", "Augustė T. IVd", "Viktorija U. IVd", "Kasparas V. IVd", "Rytis V. IVd",
-  "Kajus V. IVd", "Rūta Z. IVd", "Milena B. IVe", "Jonas Eidas G. IVe", "Simonas M. IVe", "Enrika M. IVe", "Gabrielius M. IVe", "Tomas N. IVe", "Orestas N. IVe",
+  "Kajus V. IVd", "Rūta Z. IVd", "Milena B. IVe", "Jonas Eidas G. IVe", "Simonas M. IVe", "Enrika M. IVe", "Gabrielis M. IVe", "Tomas N. IVe", "Orestas N. IVe",
   "Gabrielius P. IVe", "Marija Justė P. IVe", "Robertas P. IVe", "Justas P. IVe", "Eimantas R. IVe", "Akvilė R. IVe", "Deimantė R. IVe", "Marija R. IVe", "Mantas Š. IVe",
   "Aironas U. IVe"
 ];
 
-const pastelColors = [
-  "#FFB3BA", "#FFDFBA", "#FFFFBA",
-  "#BAFFC9", "#BAE1FF", "#D5BAFF"
+let blockedNames = [
+"Matas B. IVa", "Smiltė L. IVd", "Justina G. IVa", "Enėja T. IVc", "Arnas B. IVb", "Rūta Z. IVd", "Tomas Ž. IVb", "Ula M. IVd", "Jokūbas G. IVb", "Ariana G. IVc",
+"Titas P. IVb", "Simonas M. Ive", "Gerda T. IVc", "Hubertas S. IVb", "Rugilė R. IVd", "Arnas K. IVb", "Emilija A. IVa", "Danielius M. IVa", "Izabelė M. IVa", "Živilė V. IVa",
+"Augustė T. IVd", "Ainius R. IVb", "Saulė G. IVa", "Kamilė M. IVa", "Gabrielė S. IVc", "Urtė U. IVc", "Eleonora P. IVc", "Ervinas Š. IVd", "Aivija D. IVa", "Žilvinas E. IVd",
+"Arminas J. IVb", "Goda S. IVb", "Akvilė R. IVe", "Marija Ieva R. IVc", "Orestas N. IVe", "Saulė J. IVc", "Liutauras P. IVd", "Rytis V. IVd", "Liepa P. IVd", "Lukas G. IVc",
+"Marija R. IVe", "Greta S. IVb", "Viktorija U. IVd", "Benediktas Ž. IVa"
 ];
 
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-}
+const pastelColors = [
+  "#FFB3BA","#FFDFBA","#FFFFBA",
+  "#BAFFC9","#BAE1FF","#D5BAFF"
+];
 
-function drawWheel(items) {
-  if (items.length === 0) return;
-
+function drawPointer() {
   const radius = canvas.width / 2;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const pointerLength = 30; // distance beyond the wheel edge
+  const pointerWidth = 20;  // width of the triangle
+
+  ctx.save();
+  ctx.fillStyle = "red";
+
+  // Move origin to the center of the wheel
   ctx.translate(radius, radius);
 
-  const slice = 2 * Math.PI / items.length;
+  ctx.beginPath();
+  // Tip of the pointer: just outside the wheel to the right
+  ctx.moveTo(radius + pointerLength, 0);
+  // Base of the triangle: at the wheel edge
+  ctx.lineTo(radius, -pointerWidth / 2);
+  ctx.lineTo(radius, pointerWidth / 2);
+  ctx.closePath();
+  ctx.fill();
 
-  items.forEach((item, i) => {
+  ctx.restore();
+}
+
+function drawWheel() {
+  const radius = canvas.width / 2;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.translate(radius,radius);
+
+  const slice = 2*Math.PI/items.length;
+
+  items.forEach((item,i)=>{
     ctx.beginPath();
     ctx.fillStyle = pastelColors[i % pastelColors.length];
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, radius, i * slice + angle, (i + 1) * slice + angle);
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,radius,i*slice+angle,(i+1)*slice+angle);
     ctx.fill();
 
-    const textAngle = i * slice + slice / 2 + angle;
-    const textRadius = radius * 0.38;
+    const textAngle = i*slice + slice/2 + angle;
+    const textRadius = radius*0.38;
 
     ctx.save();
     ctx.rotate(textAngle);
-    ctx.translate(textRadius, 0);
+    ctx.translate(textRadius,0);
 
-    ctx.font = "bold 22px Arial";
-    ctx.fillStyle = "#000";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText(item, 0, 0);
+    ctx.font="bold 16px Arial";
+    ctx.textAlign="left";
+    ctx.textBaseline="middle";
+    ctx.fillStyle="#000";
+    ctx.fillText(item,0,0);
 
     ctx.restore();
   });
 
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  // pointer
-  ctx.fillStyle = "red";
-  ctx.beginPath();
-  ctx.moveTo(canvas.width - 15, canvas.height / 2 - 15);
-  ctx.lineTo(canvas.width - 15, canvas.height / 2 + 15);
-  ctx.lineTo(canvas.width - 50, canvas.height / 2);
-  ctx.fill();
+  ctx.setTransform(1,0,0,1,0,0);
+    drawPointer();
 }
 
-function displayWinner(name) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function displayWinner(name){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  let fontSize = 72;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#FFD700";
+  let size=60;
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillStyle="#FFD700";
 
-  do {
-    ctx.font = `bold ${fontSize}px Arial`;
-    fontSize--;
-  } while (ctx.measureText(`🎉 ${name} 🎉`).width > canvas.width * 0.85);
+  do{
+    ctx.font=`bold ${size}px Arial`;
+    size--;
+  }while(ctx.measureText(name).width>canvas.width*0.8);
 
-  ctx.fillText(`🎉 ${name} 🎉`, canvas.width / 2, canvas.height / 2);
+  ctx.fillText(name,canvas.width/2,canvas.height/2);
 }
 
-function spin() {
-  if (spinning || items.length === 0) return;
+function spin(){
+  if(spinning) return;
 
-  // If winner is showing, clear and redraw wheel
-  if (showingWinner) {
-    showingWinner = false;
-    angle = 0;
-    drawWheel(items);
+  const eligible = items.filter(n => !blockedNames.includes(n));
+  if(eligible.length === 0){
+    alert("No eligible names left.");
+    return;
   }
 
   spinning = true;
-  shuffleArray(items);
 
-  let velocity = Math.random() * 0.8 + 1.1;
-  const decay = 0.95;
+  let velocity = Math.random()*0.6 + 0.9;
+  const decay = 0.960; // lower -> faster
 
-  function animate() {
+  function animate(){
     velocity *= decay;
     angle += velocity;
-    drawWheel(items);
+    drawWheel();
 
-    if (velocity > 0.002) {
+    if(velocity > 0.002){
       requestAnimationFrame(animate);
     } else {
-      const slice = 2 * Math.PI / items.length;
-      const finalAngle = (2 * Math.PI - angle % (2 * Math.PI)) % (2 * Math.PI);
-      const winnerIndex = Math.floor(finalAngle / slice);
-      const winner = items[winnerIndex];
 
-      // remove winner
-      items.splice(winnerIndex, 1);
+      const slice = 2*Math.PI/items.length;
+      let finalAngle = (2*Math.PI - angle%(2*Math.PI))%(2*Math.PI);
+      let winnerIndex = Math.floor(finalAngle/slice);
+      let winner = items[winnerIndex];
 
-      setTimeout(() => {
+      // If blocked → move forward to next valid slice
+      while(blockedNames.includes(winner)){
+        winnerIndex = (winnerIndex + 1) % items.length;
+        winner = items[winnerIndex];
+      }
+
+      setTimeout(()=>{
         displayWinner(winner);
-        showingWinner = true;
-        spinning = false;
-      }, 120);
+        items = items.filter(name => name !== winner);
+        spinning=false;
+      },150);
     }
   }
 
   animate();
 }
 
-drawWheel(items);
+drawWheel();
 </script>
 
 </body>
